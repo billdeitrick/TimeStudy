@@ -1,0 +1,30 @@
+@page "/Categories"
+
+@inject CategoriesService _categoriesService
+
+<h3>Categories</h3>
+<a href="/Categories/Create"><button class="btn btn-primary mb-3"><span class="oi oi-plus"></span> New</button></a>
+<table class="table table-striped">
+    <thead>
+    <tr>
+        <th scope="col">Name</th>
+    </tr>
+    </thead>
+    @foreach (var category in categories)
+    {
+        <tr>
+            <td><a href="/categories/@category.Id"><button class="btn btn-sm btn-primary mr-2"><span class="oi oi-pencil"></span></button></a><span style="font-size:1rem">@category.Name</span></td>
+        </tr>
+    }
+</table>
+
+@code {
+
+    private Category[] categories = {new Category {Id = 1, Name = "Hello World"}};
+
+    protected override async Task OnInitializedAsync()
+    {
+        categories = await _categoriesService.GetCategories();
+    }
+
+}

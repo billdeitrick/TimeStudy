@@ -1,0 +1,38 @@
+@page "/report"
+
+@using TimeStudy.Features.Timer
+
+@inject TimeEntriesService _timeEntriesService
+<h3>Report</h3>
+<table class="table table-striped">
+    <thead>
+    <tr>
+        <th>Email</th>
+        <th>Duration</th>
+        <th>Category</th>
+        <th>Description</th>
+    </tr>
+    </thead>
+    <tbody>
+    @foreach (var row in @timeEntries)
+    {
+        <tr>
+            <td>@row.Email</td>
+            <td>@row.Duration</td>
+            <td>@row.Category.Name</td>
+            <td>@row.Description</td>
+        </tr>
+    }
+    </tbody>
+</table>
+
+@code {
+
+    private List<TimeEntry> timeEntries;
+
+    protected override void OnInitialized()
+    {
+        timeEntries = _timeEntriesService.GetTimeEntries();
+    }
+
+}

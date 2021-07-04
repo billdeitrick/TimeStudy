@@ -1,0 +1,86 @@
+@page "/Categories/{categoryId:int}"
+@page "/Categories/Create"
+
+@using Microsoft.AspNetCore.Mvc.Routing
+@using Microsoft.AspNetCore.Http.Extensions
+@using System.ComponentModel.DataAnnotations
+
+
+@inject CategoriesService _categoriesService
+@inject NavigationManager _navigationManager
+
+<h3>@operation Category</h3>
+
+<EditForm Model="categoryForm" OnValidSubmit="CreateOrEditCategory">
+    <DataAnnotationsValidator/>
+    <ValidationSummary/>
+    <InputText DisplayName="Names" @bind-Value="categoryForm.Name" Placeholder="Category Name" class="form-control mb-3"/>
+    <input type="submit" value="Submit" class="btn btn-primary mr-3"/><button class="btn btn-secondary" @onclick:preventDefault="true" @onclick="NavToIndex">Cancel</button>
+</EditForm>
+
+@code {
+
+    [Parameter]
+    public int? CategoryId { get; set; }
+
+    private string operation;
+    private CategoryForm categoryForm = new CategoryForm();
+
+    protected override async Task OnInitializedAsync()
+    {
+
+        if (CategoryId == null)
+        {
+            operation = "Create";
+        }
+        else
+        {
+            operation = "Edit";
+            categoryForm = new CategoryForm(await _categoriesService.GetCategory((int)CategoryId));
+        }
+    }
+
+    private async Task CreateOrEditCategory()
+    {
+        if (CategoryId == null)
+        {
+            await _categoriesService.CreateCategory(categoryForm.Category);
+        }
+        else
+        {
+            await _categoriesService.Update();
+        }
+        
+        NavToIndex();
+    }
+
+    private void NavToIndex()
+    {
+        _navigationManager.NavigateTo("/categories");
+    }
+
+    private class CategoryForm
+    {
+
+        public CategoryForm()
+        {
+            Category = new Category();
+        }
+
+        public CategoryForm(Category category)
+        {
+            Category = category;
+        }
+
+        [Required]
+        public string Name
+        {
+            get => Category.Name;
+            set => Category.Name = value;
+        }
+        
+        public Category Category { get; }
+
+    }
+
+}

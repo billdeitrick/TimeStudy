@@ -1,0 +1,179 @@
+﻿@page "/"
+@using System.ComponentModel.DataAnnotations
+@using System.Timers;
+@using TimeStudy.Features.Categories
+@using TimeStudy.Features.Timer
+@using System.Linq;
+@using Microsoft.AspNetCore.Http
+
+@inject CategoriesService _categoriesService
+@inject TimeEntriesService _timeEntriesService
+@inject IHttpContextAccessor _contextAccessor
+@inject NavigationManager _navigationManager
+
+<h1>Time Entry</h1>
+<p>
+    <button class="btn btn-primary me-3" @onclick="StartTimer" disabled=@startTimerDisabled>Start</button>
+    <button class="btn btn-secondary mx-3" @onclick="StopTimer" disabled=@stopTimerDisabled>Stop</button>
+    <button class="btn btn-danger me-3" @onclick="ResetTimer" disabled=@resetTimerDisabled>Reset</button>
+</p>
+<EditForm Model=@timeEntryForm OnValidSubmit="SubmitForm">
+    <DataAnnotationsValidator/>
+    <ValidationSummary/>
+    <InputText DisplayName="Duration" @bind-Value="timeEntryForm.Duration" class="form-control mb-3" placeholder="Time Taken (format hh:mm:ss)" pattern="[0-9]{2}:[0-9]{2}:[0-9]{2}"/>
+    <InputText DisplayName="Description" @bind-Value="timeEntryForm.Description" class="form-control mb-3" placeholder="Description of Work (optional)"/>
+    <InputSelect DisplayName="Category" @bind-Value="timeEntryForm.CategoryId" class="form-control mb-3" placehoder="Select Category">
+        @if (timeEntryForm.Categories != null)
+        {
+            @foreach (var category in @timeEntryForm.Categories)
+            {
+                <option value="@category.Id">@category.Name</option>
+            }
+        }
+    </InputSelect>
+
+    <input type="submit" value="Submit" class="btn btn-primary"/>
+
+</EditForm>
+
+@code
+{
+
+    private Timer timerTimer = new Timer();
+    
+    private TimeEntryForm timeEntryForm = new TimeEntryForm();
+    
+    private DateTime startTime;
+    private TimeSpan savedTime = TimeSpan.Zero;
+
+    private bool startTimerDisabled = false;
+    private bool stopTimerDisabled = true;
+    private bool resetTimerDisabled = true;
+
+    protected override async Task OnInitializedAsync()
+    {
+        timerTimer.Elapsed += (o, e) =>
+        {
+            Task.Run(() =>
+            {
+                timeEntryForm.Duration = ((DateTime.Now - startTime) + savedTime).ToString(@"hh\:mm\:ss");
+                InvokeAsync(StateHasChanged);
+            });
+        };
+        timerTimer.Interval = 200;
+
+        await InitForm();
+
+    }
+
+    private void StartTimer()
+    {
+        startTime = DateTime.Now;
+        stopTimerDisabled = false;
+        resetTimerDisabled = false;
+        startTimerDisabled = true;
+        timerTimer.Start();
+    }
+
+    private void StopTimer()
+    {
+        savedTime += DateTime.Now - startTime;
+        stopTimerDisabled = true;
+        startTimerDisabled = false;
+        timerTimer.Stop();
+    }
+
+    private void ResetTimer()
+    {
+        timerTimer.Stop();
+        savedTime = TimeSpan.Zero;
+        timeEntryForm.Duration = "00:00:00";
+        startTimerDisabled = false;
+        stopTimerDisabled = true;
+        resetTimerDisabled = true;
+    }
+
+    private async Task SubmitForm()
+    {
+        await _timeEntriesService.CreateTimeEntry(timeEntryForm.TimeEntry);
+        _navigationManager.NavigateTo("/", forceLoad: true);
+    }
+
+    private async Task InitForm()
+    {
+        timeEntryForm = new TimeEntryForm((await _categoriesService.GetCategories()).ToList());
+        timeEntryForm.Duration = "00:00:00";
+        timeEntryForm.Email = _contextAccessor.HttpContext.User.Identity.Name;
+    }
+
+    private class TimeEntryForm
+    {
+        
+        public TimeEntry TimeEntry { get; }
+        public readonly List<Category> Categories;
+
+        [Required]
+        public string Duration
+        {
+            get => TimeEntry.Duration.ToString(@"hh\:mm\:ss");
+            set => TimeEntry.Duration = TimeSpan.Parse(value);
+        }
+
+        [Required]
+        public string Email
+        {
+            get => TimeEntry.Email;
+            set => TimeEntry.Email = value;
+        }
+
+        public string Description
+        {
+            get => TimeEntry.Description;
+            set
+            {
+                TimeEntry.Description = value;
+            }
+        }
+
+        [Required]
+        public int CategoryId
+        {
+            get
+            {
+                if (TimeEntry.Category == null)
+                {
+                    if (Categories == null)
+                    {
+                        return -1;
+                    }
+                    else
+                    {
+                        return Categories.First().Id;
+                    }
+                }
+
+                return TimeEntry.Category.Id;
+            }
+
+            set
+            {
+                Console.WriteLine($"The Value is {value}");
+                TimeEntry.Category = Categories.First(cat => cat.Id == value);
+                Console.WriteLine("The value was set.");
+            }
+        }
+
+        public TimeEntryForm()
+        {
+            TimeEntry = new TimeEntry();
+        }
+        
+        public TimeEntryForm(List<Category> categories) : this()
+        {
+            Categories = categories;
+            TimeEntry.Category = categories.First();
+        }
+
+    }
+
+}
