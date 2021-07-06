@@ -22,9 +22,11 @@ namespace TimeStudy.Features.Timer
             await _timeStudyContext.SaveChangesAsync();
         }
         
-        public List<TimeEntry> GetTimeEntries()
+        public async Task<List<TimeEntry>> GetTimeEntries()
         {
-            return _timeStudyContext.TimeEntry.ToList();
+            return await _timeStudyContext.TimeEntry
+                .Include(entry => entry.Category)
+                .ToListAsync();
         }
 
     }

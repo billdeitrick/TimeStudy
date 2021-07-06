@@ -1,38 +1,54 @@
 @page "/report"
 
 @using TimeStudy.Features.Timer
+@using System.Linq;
 
 @inject TimeEntriesService _timeEntriesService
-<h3>Report</h3>
-<table class="table table-striped">
-    <thead>
-    <tr>
-        <th>Email</th>
-        <th>Duration</th>
-        <th>Category</th>
-        <th>Description</th>
-    </tr>
-    </thead>
-    <tbody>
-    @foreach (var row in @timeEntries)
-    {
+<h1>Report</h1>
+@if (timeEntries == null)
+{
+    <p>Loading...</p>
+}
+else
+{
+    <a href="/download" target="_blank"><button class="btn btn-primary mb-3">Download</button></a>
+    <table class="table table-striped">
+        <thead>
         <tr>
-            <td>@row.Email</td>
-            <td>@row.Duration</td>
-            <td>@row.Category.Name</td>
-            <td>@row.Description</td>
+            <th>Email</th>
+            <th>Create Time</th>
+            <th>Duration</th>
+            <th>Category</th>
+            <th>Description</th>
         </tr>
-    }
-    </tbody>
-</table>
+        </thead>
+        <tbody>
+        @foreach (var row in timeEntries)
+        {
+            <tr>
+                <td>@row.Email</td>
+                <td>@row.CreatedDate</td>
+                <td>@row.Duration</td>
+                <td>@row.Category.Name</td>
+                <td>@row.Description</td>
+            </tr>
+        }
+        </tbody>
+    </table>
+}
 
 @code {
 
-    private List<TimeEntry> timeEntries;
+    private TimeEntry[] timeEntries;
 
-    protected override void OnInitialized()
+    protected override async Task OnInitializedAsync()
     {
-        timeEntries = _timeEntriesService.GetTimeEntries();
+        timeEntries = (await _timeEntriesService.GetTimeEntries()).ToArray();
+    }
+
+    public void downloadEntries()
+    {
+        
     }
 
 }

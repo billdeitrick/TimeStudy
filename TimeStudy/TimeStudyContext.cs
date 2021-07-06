@@ -14,5 +14,12 @@ namespace TimeStudy
         public DbSet<Category> Category { get; set; }
         public DbSet<TimeEntry> TimeEntry { get; set; }
 
+        protected override void OnModelCreating(ModelBuilder modelBuilder)
+        {
+            modelBuilder.Entity<TimeEntry>()
+                .Property(t => t.CreatedDate)
+                .HasDefaultValueSql("GETUTCDATE()");
+        }
+
     }
 }
