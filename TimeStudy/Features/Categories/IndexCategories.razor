@@ -2,7 +2,7 @@
 
 @inject CategoriesService _categoriesService
 
-<h3>Categories</h3>
+<h1>Categories</h1>
 <a href="/Categories/Create"><button class="btn btn-primary mb-3"><span class="oi oi-plus"></span> New</button></a>
 <table class="table table-striped">
     <thead>
@@ -20,7 +20,7 @@
 
 @code {
 
-    private Category[] categories = {new Category {Id = 1, Name = "Hello World"}};
+    private Category[] categories = new Category[0];
 
     protected override async Task OnInitializedAsync()
     {
