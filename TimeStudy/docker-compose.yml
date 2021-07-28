@@ -1,0 +1,15 @@
+version: "3.8"
+services:
+  db:
+    image: mcr.microsoft.com/azure-sql-edge
+    environment:
+      ACCEPT_EULA: "Y"
+      MSSQL_PID: "Developer"
+    env_file: "devdb.env"
+    ports:
+      - 1433:1433
+    volumes:
+      - timestudy-sql:/var/opt/mssql
+
+volumes:
+  timestudy-sql:
