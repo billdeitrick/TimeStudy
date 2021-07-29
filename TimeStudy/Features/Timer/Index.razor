@@ -12,29 +12,42 @@
 @inject NavigationManager _navigationManager
 
 <h1>Time Entry</h1>
-<p>
-    <button class="btn btn-primary me-3" @onclick="StartTimer" disabled=@startTimerDisabled>Start</button>
-    <button class="btn btn-secondary mx-3" @onclick="StopTimer" disabled=@stopTimerDisabled>Stop</button>
-    <button class="btn btn-danger me-3" @onclick="ResetTimer" disabled=@resetTimerDisabled>Reset</button>
-</p>
-<EditForm Model=@timeEntryForm OnValidSubmit="SubmitForm">
-    <DataAnnotationsValidator/>
-    <ValidationSummary/>
-    <InputText DisplayName="Duration" @bind-Value="timeEntryForm.Duration" class="form-control mb-3" placeholder="Time Taken (format hh:mm:ss)" pattern="[0-9]{2}:[0-9]{2}:[0-9]{2}"/>
-    <InputText DisplayName="Description" @bind-Value="timeEntryForm.Description" class="form-control mb-3" placeholder="Description of Work (optional)"/>
-    <InputSelect DisplayName="Category" @bind-Value="timeEntryForm.CategoryId" class="form-control mb-3" placehoder="Select Category">
-        @if (timeEntryForm.Categories != null)
-        {
+@if (timeEntryForm.Categories != null)
+{
+    if (timeEntryForm.Categories.Count == 0)
+    {
+        <p>Create some categories to start tracking time!</p>
+        <a href="/Categories/Create"><button class="btn btn-primary">Create Now</button></a>
+    }
+    else
+    {
+        <p>
+            <button class="btn btn-primary me-3" @onclick="StartTimer" disabled=@startTimerDisabled>Start</button>
+            <button class="btn btn-secondary mx-3" @onclick="StopTimer" disabled=@stopTimerDisabled>Stop</button>
+            <button class="btn btn-danger me-3" @onclick="ResetTimer" disabled=@resetTimerDisabled>Reset</button>
+        </p>
+        <EditForm Model=@timeEntryForm OnValidSubmit="SubmitForm">
+            <DataAnnotationsValidator/>
+            <ValidationSummary/>
+            <InputText DisplayName="Duration" @bind-Value="timeEntryForm.Duration" class="form-control mb-3" placeholder="Time Taken (format hh:mm:ss)" pattern="[0-9]{2}:[0-9]{2}:[0-9]{2}"/>
+            <InputText DisplayName="Description" @bind-Value="timeEntryForm.Description" class="form-control mb-3" placeholder="Description of Work (optional)"/>
+            <InputSelect DisplayName="Category" @bind-Value="timeEntryForm.CategoryId" class="form-control mb-3" placehoder="Select Category">
             @foreach (var category in @timeEntryForm.Categories)
-            {
-                <option value="@category.Id">@category.Name</option>
-            }
-        }
-    </InputSelect>
+                {
+                    <option value="@category.Id">@category.Name</option>
+                }
+            </InputSelect>
 
-    <input type="submit" value="Submit" class="btn btn-primary"/>
+            <input type="submit" value="Submit" class="btn btn-primary"/>
 
-</EditForm>
+        </EditForm>
+    }
+}
+else
+{
+    <h3>Loading...</h3>
+}
+
 
 @code
 {
@@ -146,10 +159,13 @@
                     {
                         return -1;
                     }
-                    else
+                    
+                    if (Categories.Count == 0)
                     {
-                        return Categories.First().Id;
+                        return -1;
                     }
+
+                    return Categories.First().Id;
                 }
 
                 return TimeEntry.Category.Id;
@@ -171,7 +187,10 @@
         public TimeEntryForm(List<Category> categories) : this()
         {
             Categories = categories;
-            TimeEntry.Category = categories.First();
+            if (categories.Count > 0)
+            {
+                TimeEntry.Category = categories.First();
+            }
         }
 
     }
